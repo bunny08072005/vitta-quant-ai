@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vitta-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vitta_quant_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-vitta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vitta_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vitta} -d ${POSTGRES_DB:-vitta_quant_ai}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: vitta-backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://vitta:vitta_password@postgres:5432/vitta_quant_ai}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/tests:/app/tests
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: vitta-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
