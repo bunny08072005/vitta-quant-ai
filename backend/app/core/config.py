@@ -11,13 +11,16 @@ class Settings(BaseSettings):
     environment: str = "local"
     api_v1_prefix: str = "/api/v1"
 
-    database_url: str = "postgresql+psycopg://vitta:vitta_password@localhost:5432/vitta_quant_ai"
+    database_url: str = "postgresql+psycopg://postgres:2134@localhost:5432/vitta_quant_ai"
 
     backend_cors_origins: str = Field(default="http://localhost:5173,http://127.0.0.1:5173")
 
     jwt_secret_key: str = "change-me-before-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+
+    market_data_scheduler_enabled: bool = False
+    market_data_scheduler_interval_minutes: int = 240
 
     @computed_field
     @property
